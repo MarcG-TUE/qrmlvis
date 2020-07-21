@@ -41,6 +41,21 @@ export class Graph extends Component {
         defaultStyle[mxConstants.STYLE_FONTSTYLE] = 0;
         graph.getStylesheet().putDefaultVertexStyle(defaultStyle);
 
+        // alternative vertex style
+        let  alternativeStyle = new Object();
+        alternativeStyle[MxGraph.mxConstants.STYLE_ROUNDED] = true;
+        alternativeStyle[MxGraph.mxConstants.STYLE_EDGE] = MxGraph.mxEdgeStyle.EntityRelation;
+        alternativeStyle[mxConstants.STYLE_PERIMETER] = MxGraph.mxPerimeter.RectanglePerimeter;
+        alternativeStyle[mxConstants.STYLE_GRADIENTCOLOR] = '#B9F541';
+        alternativeStyle[mxConstants.STYLE_FILLCOLOR] = '#CDF58C';
+        alternativeStyle[mxConstants.STYLE_STROKECOLOR] = '#78C81B';
+        alternativeStyle[mxConstants.STYLE_FONTCOLOR] = '#000000';
+        alternativeStyle[mxConstants.STYLE_OPACITY] = '80';
+        alternativeStyle[mxConstants.STYLE_FONTSIZE] = '12';
+        alternativeStyle[mxConstants.STYLE_FONTSTYLE] = 0;
+        graph.getStylesheet().putCellStyle('alternative', alternativeStyle);
+
+
         // port style
         let portStyle = new Object();
         portStyle[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL;
@@ -248,10 +263,25 @@ export class Graph extends Component {
     }
 
     AddComponent(graph, parent, componentModel) {
+        return this.AddAltOrSubComponent(graph, parent, componentModel, false);
+    }
+
+    AddAlternativeComponent(graph, parent, componentModel) {
+        return this.AddAltOrSubComponent(graph, parent, componentModel, true);
+    }
+
+
+    AddAltOrSubComponent(graph, parent, componentModel, isAlternative) {
         const NameStructure = componentModel.Name;
         const name = this.SerializeName(NameStructure);
         
-        var component = graph.insertVertex(parent, null, null);
+        var component = null
+        if (isAlternative) {
+            console.log("making alternative")
+            component = graph.insertVertex(parent, null, null, 20, 20, 80, 20, 'alternative');
+        } else {
+            component = graph.insertVertex(parent, null, null);
+        }
         component.connectable = false;
         var componentName = graph.insertVertex(component, null, name, 0, 0, null, null, 'name', false);   
         componentName.connectable = false;
@@ -272,6 +302,9 @@ export class Graph extends Component {
         this.AddQualities(graph, component, componentModel.Qualities, supportsPortsCount, parameterCount);
         this.AddPorts(graph, component, componentModel.Ports, qualityCount, parameterCount);
         this.AddSubcomponents(graph, component, componentModel.Subcomponents);
+        if (componentModel.AlternativeComponents) {
+            this.AddAlternativeComponents(graph, component, componentModel.AlternativeComponents);
+        }
         this.AddLinks(graph, component, componentModel);
     }
 
@@ -283,6 +316,13 @@ export class Graph extends Component {
             this.AddComponent(graph, parent, subcomponent);
         });
     }
+
+    AddAlternativeComponents(graph, parent, subcomponents) {
+        subcomponents.forEach(subcomponent => {
+            this.AddAlternativeComponent(graph, parent, subcomponent);
+        });
+    }
+
 
     FindByStructuredName(cells, structuredName) {
         if (cells == null)
