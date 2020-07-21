@@ -70,6 +70,21 @@ export class Graph extends Component {
         qualityStyle[mxConstants.STYLE_FONTCOLOR] = '#b941f5';
         graph.getStylesheet().putCellStyle('quality', qualityStyle);
 
+        // parameter style
+        let parameterStyle = new Object();
+        parameterStyle[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL;
+        parameterStyle[mxConstants.STYLE_PERIMETER] = MxGraph.mxPerimeter.RectanglePerimeter;
+        parameterStyle[mxConstants.STYLE_PERIMETER_SPACING] = '2';
+        parameterStyle[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT;
+        parameterStyle[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE;
+        parameterStyle[mxConstants.STYLE_FONTSIZE] = '10';
+        parameterStyle[mxConstants.STYLE_FONTSTYLE] = 0;
+        parameterStyle[mxConstants.STYLE_FILLCOLOR] = '#d741f5';
+        parameterStyle[mxConstants.STYLE_GRADIENTCOLOR] = '#d741f5';
+        parameterStyle[mxConstants.STYLE_FONTCOLOR] = '#0000005';
+        graph.getStylesheet().putCellStyle('parameter', parameterStyle);
+
+
         // name pseudo-vertex of each component
         let nameStyle = new Object();
         nameStyle[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL;
@@ -147,9 +162,10 @@ export class Graph extends Component {
         graph.insertVertex(graph.getDefaultParent(), null, model.Name, 0.5, 0.5, 100, 30, null, false);
     }
 
-    AddPorts(graph, parent, ports, qualitiesCount) {
+    AddPorts(graph, parent, ports, qualitiesCount, parametersCount) {
         var i;
         
+        // input ports to the left
         var port_count = ports.Inputs.length;
         for(i = 0; i < port_count; i++) {
             const offset = (i + 1) / (port_count + 1);
@@ -157,6 +173,7 @@ export class Graph extends Component {
             port.geometry.offset = new MxGraph.mxPoint(-1, -1);            
         }
 
+        // output ports to the right
         var port_count = ports.Outputs.length;
         for(i = 0; i < port_count; i++) {
             const offset = (i + 1) / (port_count + 1);
@@ -164,13 +181,17 @@ export class Graph extends Component {
             port.geometry.offset = new MxGraph.mxPoint(-1, -1);
         }
 
+        // supports ports at the top
+        // reserve space for qualities and parameters at the top
+        // first parameters, then qualities, then supports
         var port_count = ports.Supports.length;
         for(i = 0; i < port_count; i++) {
-            const offset = (qualitiesCount + i + 1) / (port_count + qualitiesCount + 1);
+            const offset = (qualitiesCount + parametersCount + i + 1) / (port_count + qualitiesCount + parametersCount + 1);
             var port = graph.insertVertex(parent, null, this.SerializeName(ports.Supports[i].Name), offset, 0, 2, 2, 'port;align=center;rotation=90', true);
             port.geometry.offset = new MxGraph.mxPoint(-1, -1);
         }
 
+        // requires ports bottom
         var port_count = ports.Requires.length;
         for(i = 0; i < port_count; i++) {
             const offset = (i + 1) / (port_count + 1);
@@ -179,7 +200,7 @@ export class Graph extends Component {
         }
     }
 
-    AddQualities(graph, componentVertex, qualities, supportsPortsCount) {
+    AddQualities(graph, componentVertex, qualities, supportsPortsCount, parameterCount) {
         if (qualities == null)
             return;
 
@@ -187,12 +208,31 @@ export class Graph extends Component {
         const qualityCount = qualityNames.length;
        
         for(let i = 0; i < qualityCount; i++) {
-            const offset = (i + 1) / (qualityCount + supportsPortsCount + 1);
+            // first parameters, then qualities, then supports
+            const offset = (parameterCount + i + 1) / (parameterCount + qualityCount + supportsPortsCount + 1);
             var quality = graph.insertVertex(componentVertex, null, qualityNames[i], offset, 0, 2, 2, 'quality;spacingRight=5;align=center;rotation=90', true);
             quality.geometry.offset = new MxGraph.mxPoint(-1, -1);
         }
     }
 
+    AddParameters(graph, componentVertex, parameters, supportsPortsCount, qualityCount) {
+        if (parameters == null)
+            return;
+
+        const parameterNames = Object.keys(parameters);
+        const parameterCount = parameterNames.length;
+       
+        for(let i = 0; i < parameterCount; i++) {
+            const offset = (i + 1) / (parameterCount + qualityCount + supportsPortsCount + 1);
+            var parameter = graph.insertVertex(componentVertex, null, parameterNames[i], offset, 0, 2, 2, 'parameter;spacingRight=5;align=center;rotation=90', true);
+            console.log(`adding parameter ${parameterNames[i]}!`)
+
+            parameter.geometry.offset = new MxGraph.mxPoint(-1, -1);
+        }
+    }
+
+
+    
     SerializeName(structuredName) {
         if (structuredName.index == undefined)
             return structuredName.name;
@@ -219,10 +259,18 @@ export class Graph extends Component {
         component.raw = componentModel;
 
         const qualityCount = this.GetArrayLengthSafe(Object.keys(componentModel.Qualities));
+        var parameterCount = 0
+        if (componentModel.Parameters) {
+            parameterCount = this.GetArrayLengthSafe(Object.keys(componentModel.Parameters));
+        }
+         else {
+            componentModel.Parameters = []
+         }
         const supportsPortsCount = this.GetArrayLengthSafe(componentModel.Ports.Supports);
 
-        this.AddQualities(graph, component, componentModel.Qualities, supportsPortsCount);
-        this.AddPorts(graph, component, componentModel.Ports, qualityCount);
+        this.AddParameters(graph, component, componentModel.Parameters, supportsPortsCount, qualityCount);        
+        this.AddQualities(graph, component, componentModel.Qualities, supportsPortsCount, parameterCount);
+        this.AddPorts(graph, component, componentModel.Ports, qualityCount, parameterCount);
         this.AddSubcomponents(graph, component, componentModel.Subcomponents);
         this.AddLinks(graph, component, componentModel);
     }
@@ -307,7 +355,7 @@ export class Graph extends Component {
             
             let isPort = function(vertex) {
                 if (vertex.style)
-                    return vertex.style.startsWith("port") || vertex.style.startsWith("quality") || vertex.style.startsWith("name");
+                    return vertex.style.startsWith("port") || vertex.style.startsWith("quality") || vertex.style.startsWith("parameter") || vertex.style.startsWith("name");
                 else
                     return false;
             }
