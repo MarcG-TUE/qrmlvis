@@ -1,4 +1,13 @@
-module.exports = {
+const path = require('path');
+
+  module.exports = {
+    entry: './src/utils.js',
+    output: {
+      path: path.resolve(__dirname, 'dist/lib'),
+      filename: 'libqrmlvis.js',
+      libraryTarget: 'var',
+      library: 'QrmlVisEntryPoint'
+    },
     module: {
       rules: [
         {
@@ -9,10 +18,5 @@ module.exports = {
           }
         }
       ]
-    },
-    watch: true,
-    watchOptions: {
-      aggregateTimeout: 200,
-      ignored : ["/node_modules/"]
     }
-  };
+};
