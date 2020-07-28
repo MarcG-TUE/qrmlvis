@@ -6,6 +6,7 @@
   "scripts": {
     "build": "webpack --mode development",
     "watch": "webpack --watch --mode development ./example/run.js",
+    "buildexample": "webpack --mode development ./example/run.js",
     "example": "ws"
   },
   "author": "Václav Čamra",

@@ -240,7 +240,6 @@ export class Graph extends Component {
         for(let i = 0; i < parameterCount; i++) {
             const offset = (i + 1) / (parameterCount + qualityCount + supportsPortsCount + 1);
             var parameter = graph.insertVertex(componentVertex, null, parameterNames[i], offset, 0, 2, 2, 'parameter;spacingRight=5;align=center;rotation=90', true);
-            console.log(`adding parameter ${parameterNames[i]}!`)
 
             parameter.geometry.offset = new MxGraph.mxPoint(-1, -1);
         }
@@ -277,7 +276,6 @@ export class Graph extends Component {
         
         var component = null
         if (isAlternative) {
-            console.log("making alternative")
             component = graph.insertVertex(parent, null, null, 20, 20, 80, 20, 'alternative');
         } else {
             component = graph.insertVertex(parent, null, null);
@@ -444,7 +442,6 @@ export class Graph extends Component {
                 const targetX = (parentGeometry.x + parentGeometry.width) / 2 - geometry.width / 2;
                 const targetY = (parentGeometry.y + parentGeometry.height) / 2 - geometry.height / 2;
 
-                console.log("Centering")
                 graph.moveCells([vertex], targetX, targetY);
             }
 
@@ -621,6 +618,69 @@ export class Graph extends Component {
 
         return layout;
     }
+
+    _getName(cell) {
+        if (cell.value) {
+            return cell.value
+        }
+        const children = this.graph.getModel().getChildren(cell)
+        var name = null
+        if (children) {
+            children.forEach(ch => {
+                if (ch.value){
+                    if (name == null) {
+                        name = ch.value
+                    }
+                }
+            })
+        }
+        return name
+    }
+
+    _iterateGraph(base, children, onDo) {
+        if (children) {
+            children.forEach(ch => {
+                var name = this._getName(ch)
+                if(name) {
+                    const fullname = base+'.'+name
+                    onDo(fullname, ch)
+                    this._iterateGraph(fullname, this.graph.getModel().getChildren(ch), onDo)
+                }
+            })
+        }
+    }
+
+    getLayout() {
+        const children = this.graph.getModel().getChildren(this.graph.getDefaultParent());
+        var layout = {}
+        this._iterateGraph("root", children, (name, cell) => {
+            const geom = cell.getGeometry()
+            layout[name] = 
+                {
+                    x: geom.x,
+                    y: geom.y,
+                    width: geom.width,
+                    height: geom.height
+                }
+        })
+        return layout
+    }
+
+    applyLayout(layout) {
+        this.graph.getModel().beginUpdate();
+        try {            
+            const children = this.graph.getModel().getChildren(this.graph.getDefaultParent());
+            this._iterateGraph("root", children, (name, cell) => {
+                if (name in layout) {
+                    this.graph.getModel().setGeometry(cell, new mxGeometry(0, 0, 200, 300))
+                    console.log(name)
+                }
+            })    
+        } finally {
+            this.graph.getModel().endUpdate();
+        }
+    }
+
 
     loadLayout(layout) {
         this.setState({

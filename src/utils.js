@@ -8,11 +8,17 @@ function runOn(elementID, model) {
 }
 
 function getLayout() {
-    return window.QrmlVisGraphComponent.serializeLayout()
+    // return window.QrmlVisGraphComponent.serializeLayout()
+    return window.QrmlVisGraphComponent.getLayout()
+}
+
+function applyLayout(layout) {
+    return window.QrmlVisGraphComponent.applyLayout(layout)
 }
 
 
 export default {
     doRunOn: (elementID, model) => runOn(elementID, model),
-    getLayout: () => getLayout()
+    getLayout: () => getLayout(),
+    applyLayout: (layout) => applyLayout(layout)
 }

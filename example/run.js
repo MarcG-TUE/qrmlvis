@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from "react-dom";
 import { Graph } from "../src/index.js";
 
+import Utils from "../src/utils"
+
 let model2 = {
     Name: "System",
     Components: [
@@ -758,6 +760,16 @@ let model = {
 	"Name": "System"
 }
 
-let container = document.getElementById('root');
-ReactDOM.render(<Graph model={model} />, container);
-//ReactDOM.render(<h1>Hello, world</h1>, container);
+
+Utils.doRunOn("root", model)
+
+var getLayoutButton = document.getElementById('getLayoutButton')
+
+getLayoutButton.addEventListener("click", ()=>{
+	var layout = Utils.getLayout()
+	console.log(layout)
+	Utils.applyLayout(layout)
+})
+
+// let container = document.getElementById('root');
+// ReactDOM.render(<Graph model={model} />, container);
