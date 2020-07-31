@@ -3,6 +3,7 @@
 import React, {Component} from "react";
 import ReactDOM from 'react-dom';
 import MxGraphModule from 'mxgraph';
+import Layout from "./layout";
 
 let MxGraph = MxGraphModule();
 let mxConstants = MxGraph.mxConstants;
@@ -300,8 +301,8 @@ export class Graph extends Component {
         this.AddQualities(graph, component, componentModel.Qualities, supportsPortsCount, parameterCount);
         this.AddPorts(graph, component, componentModel.Ports, qualityCount, parameterCount);
         this.AddSubcomponents(graph, component, componentModel.Subcomponents);
-        if (componentModel.AlternativeComponents) {
-            this.AddAlternativeComponents(graph, component, componentModel.AlternativeComponents);
+        if (componentModel.Alternatives) {
+            this.AddAlternativeComponents(graph, component, componentModel.Alternatives);
         }
         this.AddLinks(graph, component, componentModel);
     }
@@ -660,8 +661,15 @@ export class Graph extends Component {
                     x: geom.x,
                     y: geom.y,
                     width: geom.width,
-                    height: geom.height
+                    height: geom.height,
+                    relative: geom.relative
                 }
+            if (geom.offset) {
+                layout[name].offset = {
+                    x: geom.offset.x,
+                    y: geom.offset.y
+                }
+            }
         })
         return layout
     }
@@ -672,15 +680,39 @@ export class Graph extends Component {
             const children = this.graph.getModel().getChildren(this.graph.getDefaultParent());
             this._iterateGraph("root", children, (name, cell) => {
                 if (name in layout) {
-                    this.graph.getModel().setGeometry(cell, new mxGeometry(0, 0, 200, 300))
-                    console.log(name)
+                    const ng = layout[name]
+                    var g = new mxGeometry(ng.x, ng.y, ng.width, ng.height)
+                    g.relative = ng.relative
+                    if (ng.offset) {
+                        g.offset = new mxPoint(ng.offset.x, ng.offset.y)
+                    }
+                    this.graph.getModel().setGeometry(cell, g)
                 }
             })    
         } finally {
             this.graph.getModel().endUpdate();
         }
+
+        let container = ReactDOM.findDOMNode(this.refs.divGraph);
+        // this.CenterGraph(container, this.graph);
+        // const bounds = graph.getGraphBounds();
+        // const tx = -bounds.x - (bounds.width - container.clientWidth) / 2;
+        // const ty = -bounds.y - (bounds.height - container.clientHeight) / 2;
+        this.graph.view.setTranslate(0, 0);
+
     }
 
+
+    autoLayout(layout) {
+        const lm = new Layout()
+        const newLayout = lm.autoLayout(layout)
+        this.applyLayout(newLayout)
+    }
+
+    getHierarchy(layout) {
+        const lm = new Layout()
+        return lm.getHierarchy(layout)
+    }
 
     loadLayout(layout) {
         this.setState({

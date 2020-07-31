@@ -764,11 +764,20 @@ let model = {
 Utils.doRunOn("root", model)
 
 var getLayoutButton = document.getElementById('getLayoutButton')
+var applyLayoutButton = document.getElementById('applyLayoutButton')
+
+var layout
 
 getLayoutButton.addEventListener("click", ()=>{
-	var layout = Utils.getLayout()
-	console.log(layout)
+	layout = Utils.getLayout()
+})
+
+applyLayoutButton.addEventListener("click", ()=>{
 	Utils.applyLayout(layout)
+})
+
+autoLayoutButton.addEventListener("click", ()=>{
+	Utils.autoLayout(layout)
 })
 
 // let container = document.getElementById('root');

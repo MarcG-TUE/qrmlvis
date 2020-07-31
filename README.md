@@ -103,12 +103,14 @@ LinkEndpoint:
 ```
 
 Name:
+
 ```
 {
-	<string> Name - Base name
+	<string> name - Base name
 	<int> index - If the name is part of an array, here is the index of the array, otherwise undefined
 }
 ```
 
 # Used technologies
-The library is build using the MxGraph library ([API documentation](https://jgraph.github.io/mxgraph/docs/js-api/files/index-txt.html)). 
+
+The library is built using the MxGraph library ([API documentation](https://jgraph.github.io/mxgraph/docs/js-api/files/index-txt.html)). 
